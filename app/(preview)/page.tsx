@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { experimental_useObject } from "ai/react";
-import { questionsSchema } from "@/lib/schemas";
+import { questionsFCSchema, questionsSchema } from "@/lib/schemas";
 import { z } from "zod";
 import { toast } from "sonner";
 import { FileUp, Plus, Loader2 } from "lucide-react";
@@ -22,10 +22,12 @@ import NextLink from "next/link";
 import { generateQuizTitle } from "./actions";
 import { AnimatePresence, motion } from "framer-motion";
 import { VercelIcon, GitIcon } from "@/components/icons";
+import QuizFC from "@/components/quiz-fc";
 
 export default function ChatWithFiles() {
   const [files, setFiles] = useState<File[]>([]);
-  const [questions, setQuestions] = useState<z.infer<typeof questionsSchema>>(
+  const [questionType, setQuestionType] = useState<string>("quiz");
+  const [questions, setQuestions] = useState<z.infer<typeof questionsSchema | any>>(
     [],
   );
   const [isDragging, setIsDragging] = useState(false);
@@ -45,6 +47,26 @@ export default function ChatWithFiles() {
     },
     onFinish: ({ object }) => {
       setQuestions(object ?? []);
+      setQuestionType("quiz");
+    },
+  });
+
+  const {
+    submit: submitFC,
+    object: partialFCQuestions,
+    isLoading: isLoadingFC,
+  } = experimental_useObject({
+    api: "/api/generate-fc",
+    schema: questionsFCSchema,
+    initialValue: undefined,
+    onError: (error) => {
+      toast.error("Failed to generate quiz. Please try again.");
+      setFiles([]);
+    },
+    onFinish: ({ object }) => {
+      console.log(JSON.stringify(object, null, 2), "this is the question")
+      setQuestions(object ?? []);
+      setQuestionType("FC");
     },
   });
 
@@ -94,17 +116,39 @@ export default function ChatWithFiles() {
     setTitle(generatedTitle);
   };
 
+  const handleSubmitForFCWithFiles = async (e: React.FormEvent<HTMLFormElement>) => {
+    // document.getElementsByTagName("form")[0].preventDefault();
+    const encodedFiles = await Promise.all(
+      files.map(async (file) => ({
+        name: file.name,
+        type: file.type,
+        data: await encodeFileAsBase64(file),
+      })),
+    );
+    submitFC({ files: encodedFiles });
+    const generatedTitle = await generateQuizTitle(encodedFiles[0].name);
+    setTitle(generatedTitle);
+  };
+
   const clearPDF = () => {
     setFiles([]);
     setQuestions([]);
   };
 
   const progress = partialQuestions ? (partialQuestions.length / 4) * 100 : 0;
+  const progressFC = partialFCQuestions ? (partialFCQuestions.length / 4) * 100 : 0;
 
   if (questions.length === 4) {
-    return (
-      <Quiz title={title ?? "Quiz"} questions={questions} clearPDF={clearPDF} />
-    );
+    if(questionType == "quiz"){
+      return (
+        <Quiz title={title ?? "Quiz"} questions={questions} clearPDF={clearPDF} />
+      );
+    }
+    if(questionType == "FC"){
+      return (
+        <QuizFC title={title ?? "Quiz"} questions={questions} clearPDF={clearPDF} />
+      );
+    }
   }
 
   return (
@@ -202,6 +246,29 @@ export default function ChatWithFiles() {
                 "Generate Quiz"
               )}
             </Button>
+            <Button
+              type="button"
+              className="w-full"
+              disabled={files.length === 0}
+              onClick={(e: any)=> handleSubmitForFCWithFiles(e)}
+            >
+              {isLoading ? (
+                <span className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Generating Flash Card...</span>
+                </span>
+              ) : (
+                "Generate Flash Card"
+              )}
+            </Button>
+            <Button
+              type="button"
+              className="w-full"
+              disabled={files.length === 0}
+              onClick={()=> toast.message('Feature coming soon ')}
+            >
+              Generate Matches
+            </Button>
           </form>
         </CardContent>
         {isLoading && (
@@ -223,6 +290,31 @@ export default function ChatWithFiles() {
                 <span className="text-muted-foreground text-center col-span-4 sm:col-span-2">
                   {partialQuestions
                     ? `Generating question ${partialQuestions.length + 1} of 4`
+                    : "Analyzing PDF content"}
+                </span>
+              </div>
+            </div>
+          </CardFooter>
+        )}
+        {isLoadingFC && (
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="w-full space-y-1">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Progress</span>
+                <span>{Math.round(progressFC)}%</span>
+              </div>
+              <Progress value={progressFC} className="h-2" />
+            </div>
+            <div className="w-full space-y-2">
+              <div className="grid grid-cols-6 sm:grid-cols-4 items-center space-x-2 text-sm">
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    isLoadingFC ? "bg-yellow-500/50 animate-pulse" : "bg-muted"
+                  }`}
+                />
+                <span className="text-muted-foreground text-center col-span-4 sm:col-span-2">
+                  {partialFCQuestions
+                    ? `Generating question ${partialFCQuestions.length + 1} of 4`
                     : "Analyzing PDF content"}
                 </span>
               </div>
