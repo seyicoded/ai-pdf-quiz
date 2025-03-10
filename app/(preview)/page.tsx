@@ -201,12 +201,7 @@ export default function ChatWithFiles() {
               PDF Quiz Generator
             </CardTitle>
             <CardDescription className="text-base">
-              Upload a PDF to generate an interactive quiz based on its content
-              using the <Link href="https://sdk.vercel.ai">AI SDK</Link> and{" "}
-              <Link href="https://sdk.vercel.ai/providers/ai-sdk-providers/google-generative-ai">
-                Google&apos;s Gemini Pro
-              </Link>
-              .
+              Upload a PDF to generate an interactive quiz based on its content.
             </CardDescription>
           </div>
         </CardHeader>
@@ -322,7 +317,7 @@ export default function ChatWithFiles() {
           </CardFooter>
         )}
       </Card>
-      <motion.div
+      {/* <motion.div
         className="flex flex-row gap-4 items-center justify-between fixed bottom-6 text-xs "
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -344,7 +339,7 @@ export default function ChatWithFiles() {
           <VercelIcon size={14} />
           Deploy with Vercel
         </NextLink>
-      </motion.div>
+      </motion.div> */}
     </div>
   );
 }
