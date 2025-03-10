@@ -17,7 +17,7 @@ export const questionSchema = z.object({
 
 export const questionFCSchema = z.object({
   question: z.string(),
-  questionAbsoluteImage: z.string().describe("A url of any image"),
+  questionAbsoluteImage: z.string().optional().describe("A url of any image"),
   options: z
     .array(z.string())
     .length(4)
