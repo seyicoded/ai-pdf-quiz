@@ -1,4 +1,4 @@
-# AI SDK PDF Support Example
+# AI SDK PDF Support Example 1.1
 
 This example demonstrates how to use the [AI SDK](https://sdk.vercel.ai/docs) with [Next.js](https://nextjs.org/) with the `useObject` hook to submit PDF messages to the AI provider of your choice (Google or Anthropic).
 
